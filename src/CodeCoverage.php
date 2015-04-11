@@ -327,14 +327,14 @@ class PHP_CodeCoverage
 
         $this->tests[$id] = array('size' => $size, 'status' => $status);
 
-        foreach ($data as $file => $lines) {
+        foreach ($data as $file => $fileData) {
             if (!$this->filter->isFile($file)) {
                 continue;
             }
 
-            foreach ($lines as $k => $v) {
+            foreach ($fileData['lines'] as $k => $v) {
                 if ($v == 1) {
-                    $this->data[$file][$k][] = $id;
+                    $this->data[$file]['lines'][$k][] = $id;
                 }
             }
         }
@@ -347,22 +347,22 @@ class PHP_CodeCoverage
      */
     public function merge(PHP_CodeCoverage $that)
     {
-        foreach ($that->getData() as $file => $lines) {
+        foreach ($that->getData() as $file => $fileData) {
             if (!isset($this->data[$file])) {
                 if (!$that->filter()->isFiltered($file)) {
-                    $this->data[$file] = $lines;
+                    $this->data[$file] = array('lines' => $fileData['lines']);
                 }
 
                 continue;
             }
 
-            foreach ($lines as $line => $data) {
+            foreach ($fileData['lines'] as $line => $data) {
                 if ($data !== null) {
-                    if (!isset($this->data[$file][$line])) {
-                        $this->data[$file][$line] = $data;
+                    if (!isset($this->data[$file]['lines'][$line])) {
+                        $this->data[$file]['lines'][$line] = $data;
                     } else {
-                        $this->data[$file][$line] = array_unique(
-                            array_merge($this->data[$file][$line], $data)
+                        $this->data[$file]['lines'][$line] = array_unique(
+                            array_merge($this->data[$file]['lines'][$line], $data)
                         );
                     }
                 }
@@ -490,7 +490,7 @@ class PHP_CodeCoverage
     {
         if ($linesToBeCovered === false ||
             ($this->forceCoversAnnotation && empty($linesToBeCovered))) {
-            $data = array();
+            $data = array('lines' => array());
 
             return;
         }
@@ -512,8 +512,8 @@ class PHP_CodeCoverage
         foreach (array_keys($data) as $filename) {
             $_linesToBeCovered = array_flip($linesToBeCovered[$filename]);
 
-            $data[$filename] = array_intersect_key(
-                $data[$filename],
+            $data[$filename]['lines'] = array_intersect_key(
+                $data[$filename]['lines'],
                 $_linesToBeCovered
             );
         }
@@ -546,7 +546,7 @@ class PHP_CodeCoverage
             }
 
             foreach ($this->getLinesToBeIgnored($filename) as $line) {
-                unset($data[$filename][$line]);
+                unset($data[$filename]['lines'][$line]);
             }
         }
     }
@@ -557,12 +557,12 @@ class PHP_CodeCoverage
      */
     private function initializeFilesThatAreSeenTheFirstTime(array $data)
     {
-        foreach ($data as $file => $lines) {
+        foreach ($data as $file => $fileData) {
             if ($this->filter->isFile($file) && !isset($this->data[$file])) {
-                $this->data[$file] = array();
+                $this->data[$file] = array('lines' => array());
 
-                foreach ($lines as $k => $v) {
-                    $this->data[$file][$k] = $v == -2 ? null : array();
+                foreach ($fileData['lines'] as $k => $v) {
+                    $this->data[$file]['lines'][$k] = $v == -2 ? null : array();
                 }
             }
         }
@@ -591,12 +591,12 @@ class PHP_CodeCoverage
                     $uncoveredFiles
                 );
             } else {
-                $data[$uncoveredFile] = array();
+                $data[$uncoveredFile] = array('lines' => array());
 
                 $lines = count(file($uncoveredFile));
 
                 for ($i = 1; $i <= $lines; $i++) {
-                    $data[$uncoveredFile][$i] = -1;
+                    $data[$uncoveredFile]['lines'][$i] = -1;
                 }
             }
         }
@@ -624,7 +624,7 @@ class PHP_CodeCoverage
                     }
                 }
 
-                $data[$file] = $fileCoverage;
+                $data[$file] = array('lines' => $fileCoverage);
             }
         }
     }
@@ -812,8 +812,8 @@ class PHP_CodeCoverage
 
         $message = '';
 
-        foreach ($data as $file => $_data) {
-            foreach ($_data as $line => $flag) {
+        foreach ($data as $file => $fileData) {
+            foreach ($fileData['lines'] as $line => $flag) {
                 if ($flag == 1 &&
                     (!isset($allowedLines[$file]) ||
                         !isset($allowedLines[$file][$line]))) {
