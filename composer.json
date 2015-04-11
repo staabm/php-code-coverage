@@ -34,7 +34,7 @@
     },
     "suggest": {
         "ext-dom": "*",
-        "ext-xdebug": ">=2.2.1",
+        "ext-xdebug": ">=2.3.2",
         "ext-xmlwriter": "*"
     },
     "autoload": {
@@ -44,7 +44,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.1.x-dev"
+            "dev-master": "path-coverage"
         }
     }
 }
