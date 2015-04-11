@@ -23,6 +23,11 @@
 class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
 {
     /**
+     * @var integer
+     */
+    private $flags;
+
+    /**
      * Constructor.
      */
     public function __construct()
@@ -37,6 +42,12 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
                 'xdebug.coverage_enable=On has to be set in php.ini'
             );
         }
+
+        $this->flags = XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE;
+
+        if (defined('XDEBUG_CC_BRANCH_CHECK')) {
+            $this->flags |= XDEBUG_CC_BRANCH_CHECK;
+        }
     }
 
     /**
@@ -44,7 +55,7 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
      */
     public function start()
     {
-        xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+        xdebug_start_code_coverage($this->flags);
     }
 
     /**
