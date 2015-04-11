@@ -27,48 +27,56 @@ abstract class PHP_CodeCoverage_TestCase extends PHPUnit_Framework_TestCase
         return array(
             array(
                 TEST_FILES_PATH . 'BankAccount.php' => array(
-                    8 =>  1,
-                    9 => -2,
-                    13 => -1,
-                    14 => -1,
-                    15 => -1,
-                    16 => -1,
-                    18 => -1,
-                    22 => -1,
-                    24 => -1,
-                    25 => -2,
-                    29 => -1,
-                    31 => -1,
-                    32 => -2
+                    'lines' => array(
+                        8 =>  1,
+                        9 => -2,
+                        13 => -1,
+                        14 => -1,
+                        15 => -1,
+                        16 => -1,
+                        18 => -1,
+                        22 => -1,
+                        24 => -1,
+                        25 => -2,
+                        29 => -1,
+                        31 => -1,
+                        32 => -2
+                    )
                 )
             ),
             array(
                 TEST_FILES_PATH . 'BankAccount.php' => array(
-                    8 => 1,
-                    13 => 1,
-                    16 => 1,
-                    29 => 1,
+                    'lines' => array(
+                        8 => 1,
+                        13 => 1,
+                        16 => 1,
+                        29 => 1,
+                    )
                 )
             ),
             array(
                 TEST_FILES_PATH . 'BankAccount.php' => array(
-                    8 => 1,
-                    13 => 1,
-                    16 => 1,
-                    22 => 1,
+                    'lines' => array(
+                        8 => 1,
+                        13 => 1,
+                        16 => 1,
+                        22 => 1,
+                    )
                 )
             ),
             array(
                 TEST_FILES_PATH . 'BankAccount.php' => array(
-                    8 => 1,
-                    13 => 1,
-                    14 => 1,
-                    15 => 1,
-                    18 => 1,
-                    22 => 1,
-                    24 => 1,
-                    29 => 1,
-                    31 => 1,
+                    'lines' => array(
+                        8 => 1,
+                        13 => 1,
+                        14 => 1,
+                        15 => 1,
+                        18 => 1,
+                        22 => 1,
+                        24 => 1,
+                        29 => 1,
+                        31 => 1,
+                    )
                 )
             )
         );
@@ -217,32 +225,34 @@ abstract class PHP_CodeCoverage_TestCase extends PHPUnit_Framework_TestCase
     {
         return array(
             TEST_FILES_PATH . 'BankAccount.php' => array(
-                8 => array(
-                    0 => 'BankAccountTest::testBalanceIsInitiallyZero',
-                    1 => 'BankAccountTest::testDepositWithdrawMoney'
-                ),
-                9 => null,
-                13 => array(),
-                14 => array(),
-                15 => array(),
-                16 => array(),
-                18 => array(),
-                22 => array(
-                    0 => 'BankAccountTest::testBalanceCannotBecomeNegative2',
-                    1 => 'BankAccountTest::testDepositWithdrawMoney'
-                ),
-                24 => array(
-                    0 => 'BankAccountTest::testDepositWithdrawMoney',
-                ),
-                25 => null,
-                29 => array(
-                    0 => 'BankAccountTest::testBalanceCannotBecomeNegative',
-                    1 => 'BankAccountTest::testDepositWithdrawMoney'
-                ),
-                31 => array(
-                    0 => 'BankAccountTest::testDepositWithdrawMoney'
-                ),
-                32 => null
+                'lines' => array(
+                    8 => array(
+                        0 => 'BankAccountTest::testBalanceIsInitiallyZero',
+                        1 => 'BankAccountTest::testDepositWithdrawMoney'
+                    ),
+                    9 => null,
+                    13 => array(),
+                    14 => array(),
+                    15 => array(),
+                    16 => array(),
+                    18 => array(),
+                    22 => array(
+                        0 => 'BankAccountTest::testBalanceCannotBecomeNegative2',
+                        1 => 'BankAccountTest::testDepositWithdrawMoney'
+                    ),
+                    24 => array(
+                        0 => 'BankAccountTest::testDepositWithdrawMoney',
+                    ),
+                    25 => null,
+                    29 => array(
+                        0 => 'BankAccountTest::testBalanceCannotBecomeNegative',
+                        1 => 'BankAccountTest::testDepositWithdrawMoney'
+                    ),
+                    31 => array(
+                        0 => 'BankAccountTest::testDepositWithdrawMoney'
+                    ),
+                    32 => null
+                )
             )
         );
     }
@@ -268,10 +278,12 @@ abstract class PHP_CodeCoverage_TestCase extends PHPUnit_Framework_TestCase
             ->will($this->returnValue(
                 array(
                     TEST_FILES_PATH . 'source_with_ignore.php' => array(
-                        2 => 1,
-                        4 => -1,
-                        6 => -1,
-                        7 => 1
+                        'lines' => array(
+                            2 => 1,
+                            4 => -1,
+                            6 => -1,
+                            7 => 1
+                        )
                     )
                 )
             ));
@@ -300,15 +312,17 @@ abstract class PHP_CodeCoverage_TestCase extends PHPUnit_Framework_TestCase
             ->will($this->returnValue(
                 array(
                     TEST_FILES_PATH . 'source_with_class_and_anonymous_function.php' => array(
-                        7  => 1,
-                        9  => 1,
-                        10 => -1,
-                        11 => 1,
-                        12 => 1,
-                        13 => 1,
-                        14 => 1,
-                        17 => 1,
-                        18 => 1
+                        'lines' => array(
+                            7  => 1,
+                            9  => 1,
+                            10 => -1,
+                            11 => 1,
+                            12 => 1,
+                            13 => 1,
+                            14 => 1,
+                            17 => 1,
+                            18 => 1
+                        )
                     )
                 )
             ));
