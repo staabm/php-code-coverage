@@ -79,6 +79,10 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
     private function cleanup(array $data)
     {
         foreach (array_keys($data) as $file) {
+            if (!isset($data[$file]['lines'])) {
+                $data[$file] = array('lines' => $data[$file]);
+            }
+
             if (isset($data[$file]['lines'][0])) {
                 unset($data[$file]['lines'][0]);
             }
