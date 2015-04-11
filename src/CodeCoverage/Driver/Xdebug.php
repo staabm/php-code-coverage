@@ -28,9 +28,9 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
     private $flags;
 
     /**
-     * Constructor.
+     * @param bool $pathCoverage
      */
-    public function __construct()
+    public function __construct($pathCoverage = true)
     {
         if (!extension_loaded('xdebug')) {
             throw new PHP_CodeCoverage_Exception('This driver requires Xdebug');
@@ -45,7 +45,7 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
 
         $this->flags = XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE;
 
-        if (defined('XDEBUG_CC_BRANCH_CHECK')) {
+        if ($pathCoverage && defined('XDEBUG_CC_BRANCH_CHECK')) {
             $this->flags |= XDEBUG_CC_BRANCH_CHECK;
         }
     }
