@@ -79,16 +79,16 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
     private function cleanup(array $data)
     {
         foreach (array_keys($data) as $file) {
-            if (isset($data[$file][0])) {
-                unset($data[$file][0]);
+            if (isset($data[$file]['lines'][0])) {
+                unset($data[$file]['lines'][0]);
             }
 
             if (file_exists($file)) {
                 $numLines = $this->getNumberOfLinesInFile($file);
 
-                foreach (array_keys($data[$file]) as $line) {
-                    if (isset($data[$file][$line]) && $line > $numLines) {
-                        unset($data[$file][$line]);
+                foreach (array_keys($data[$file]['lines']) as $line) {
+                    if (isset($data[$file]['lines'][$line]) && $line > $numLines) {
+                        unset($data[$file]['lines'][$line]);
                     }
                 }
             }
