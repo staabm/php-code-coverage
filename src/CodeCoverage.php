@@ -92,9 +92,10 @@ class PHP_CodeCoverage
      *
      * @param  PHP_CodeCoverage_Driver $driver
      * @param  PHP_CodeCoverage_Filter $filter
+     * @param  bool                    $pathCoverage
      * @throws PHP_CodeCoverage_Exception
      */
-    public function __construct(PHP_CodeCoverage_Driver $driver = null, PHP_CodeCoverage_Filter $filter = null)
+    public function __construct(PHP_CodeCoverage_Driver $driver = null, PHP_CodeCoverage_Filter $filter = null, $pathCoverage = true)
     {
         if ($driver === null) {
             $runtime = new Runtime;
@@ -102,7 +103,7 @@ class PHP_CodeCoverage
             if ($runtime->isHHVM()) {
                 $driver = new PHP_CodeCoverage_Driver_HHVM;
             } elseif ($runtime->hasXdebug()) {
-                $driver = new PHP_CodeCoverage_Driver_Xdebug;
+                $driver = new PHP_CodeCoverage_Driver_Xdebug($pathCoverage);
             } else {
                 throw new PHP_CodeCoverage_Exception('No code coverage driver available');
             }
