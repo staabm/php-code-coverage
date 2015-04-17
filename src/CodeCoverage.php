@@ -88,6 +88,11 @@ class PHP_CodeCoverage
     private $tests = array();
 
     /**
+     * @var boolean
+     */
+    private $pathCoverage = false;
+
+    /**
      * Constructor.
      *
      * @param  PHP_CodeCoverage_Driver $driver
@@ -120,8 +125,9 @@ class PHP_CodeCoverage
             $filter = new PHP_CodeCoverage_Filter;
         }
 
-        $this->driver = $driver;
-        $this->filter = $filter;
+        $this->driver       = $driver;
+        $this->filter       = $filter;
+        $this->pathCoverage = $pathCoverage;
     }
 
     /**
