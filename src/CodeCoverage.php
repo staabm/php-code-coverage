@@ -577,8 +577,33 @@ class PHP_CodeCoverage
             if ($this->filter->isFile($file) && !isset($this->data[$file])) {
                 $this->data[$file] = array('lines' => array());
 
-                foreach ($fileData['lines'] as $k => $v) {
-                    $this->data[$file]['lines'][$k] = $v == -2 ? null : array();
+                if ($this->pathCoverage) {
+                    $this->data[$file]['branches'] = array();
+                    $this->data[$file]['paths']    = array();
+
+                    foreach ($fileData['functions'] as $functionName => $functionData) {
+                        $this->data[$file]['branches'][$functionName] = array();
+                        $this->data[$file]['paths'][$functionName]    = array();
+
+                        foreach ($functionData['branches'] as $branch) {
+                            $this->data[$file]['branches'][$functionName][] = array(
+                                'line_start' => $branch['line_start'],
+                                'line_end'   => $branch['line_end'],
+                                'tests'      => array()
+                            );
+                        }
+
+                        foreach ($functionData['paths'] as $path) {
+                            $this->data[$file]['paths'][$functionName][] = array(
+                                'path'  => $path['path'],
+                                'tests' => array()
+                            );
+                        }
+                    }
+                }
+
+                foreach ($fileData['lines'] as $lineNumber => $flag) {
+                    $this->data[$file]['lines'][$lineNumber] = $flag == -2 ? null : array();
                 }
             }
         }
