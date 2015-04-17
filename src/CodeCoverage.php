@@ -97,6 +97,13 @@ class PHP_CodeCoverage
      */
     public function __construct(PHP_CodeCoverage_Driver $driver = null, PHP_CodeCoverage_Filter $filter = null, $pathCoverage = true)
     {
+        if (!is_bool($pathCoverage)) {
+            throw PHP_CodeCoverage_Util_InvalidArgumentHelper::factory(
+                3,
+                'boolean'
+            );
+        }
+
         if ($driver === null) {
             $runtime = new Runtime;
 
