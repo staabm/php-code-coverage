@@ -8,7 +8,7 @@
 ## Requirements
 
 * PHP 5.3.3 is required but using the latest version of PHP is highly recommended
-* [Xdebug](http://xdebug.org/) 2.1.3 is required but using the latest version of Xdebug is highly recommended
+* [Xdebug](http://xdebug.org/) 2.3.2 is required but using the latest version of Xdebug is highly recommended
 
 ## Installation
 
