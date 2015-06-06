@@ -81,6 +81,11 @@ class PHP_CodeCoverage
     private $ignoredLines = array();
 
     /**
+     * @var bool
+     */
+    private $disableIgnoredLines = false;
+
+    /**
      * Test data.
      *
      * @var array
@@ -384,6 +389,14 @@ class PHP_CodeCoverage
         }
 
         $this->tests = array_merge($this->tests, $that->getTests());
+
+        $this->filter->setBlacklistedFiles(
+            array_merge($this->filter->getBlacklistedFiles(), $that->filter()->getBlacklistedFiles())
+        );
+
+        $this->filter->setWhitelistedFiles(
+            array_merge($this->filter->getWhitelistedFiles(), $that->filter()->getWhitelistedFiles())
+        );
     }
 
     /**
@@ -490,6 +503,22 @@ class PHP_CodeCoverage
         }
 
         $this->processUncoveredFilesFromWhitelist = $flag;
+    }
+
+    /**
+     * @param  boolean                    $flag
+     * @throws PHP_CodeCoverage_Exception
+     */
+    public function setDisableIgnoredLines($flag)
+    {
+        if (!is_bool($flag)) {
+            throw PHP_CodeCoverage_Util_InvalidArgumentHelper::factory(
+                1,
+                'boolean'
+            );
+        }
+
+        $this->disableIgnoredLines = $flag;
     }
 
     /**
@@ -692,6 +721,10 @@ class PHP_CodeCoverage
             $lines                         = file($filename);
             $numLines                      = count($lines);
 
+            if ($this->disableIgnoredLines) {
+                return $this->ignoredLines[$filename];
+            }
+
             foreach ($lines as $index => $line) {
                 if (!trim($line)) {
                     $this->ignoredLines[$filename][] = $index + 1;
@@ -742,7 +775,7 @@ class PHP_CodeCoverage
 
                             // A DOC_COMMENT token or a COMMENT token starting with "/*"
                             // does not contain the final \n character in its text
-                            if (0 === strpos($_token, '/*') && '*/' === substr(trim($lines[$i-1]), -2)) {
+                            if (isset($lines[$i-1]) && 0 === strpos($_token, '/*') && '*/' === substr(trim($lines[$i-1]), -2)) {
                                 $this->ignoredLines[$filename][] = $i;
                             }
                         }
