@@ -17,7 +17,7 @@
 class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
 {
     /**
-     * @var integer
+     * @var int
      */
     private $flags;
 
@@ -83,7 +83,7 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
                 unset($data[$file]['lines'][0]);
             }
 
-            if ($file != "xdebug://debug-eval" && file_exists($file)) {
+            if ($file != 'xdebug://debug-eval' && file_exists($file)) {
                 $numLines = $this->getNumberOfLinesInFile($file);
 
                 foreach (array_keys($data[$file]['lines']) as $line) {
@@ -99,7 +99,7 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
 
     /**
      * @param  string $file
-     * @return integer
+     * @return int
      * @since Method available since Release 2.0.0
      */
     private function getNumberOfLinesInFile($file)
