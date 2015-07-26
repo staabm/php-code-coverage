@@ -79,9 +79,7 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
                 $data[$file] = array('lines' => $data[$file]);
             }
 
-            if (isset($data[$file]['lines'][0])) {
-                unset($data[$file]['lines'][0]);
-            }
+            unset($data[$file]['lines'][0]);
 
             if ($file != 'xdebug://debug-eval' && file_exists($file)) {
                 $numLines = $this->getNumberOfLinesInFile($file);

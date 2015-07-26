@@ -710,14 +710,15 @@ class PHP_CodeCoverage
 
         if (!isset($this->ignoredLines[$filename])) {
             $this->ignoredLines[$filename] = array();
-            $ignore                        = false;
-            $stop                          = false;
-            $lines                         = file($filename);
-            $numLines                      = count($lines);
 
             if ($this->disableIgnoredLines) {
                 return $this->ignoredLines[$filename];
             }
+
+            $ignore   = false;
+            $stop     = false;
+            $lines    = file($filename);
+            $numLines = count($lines);
 
             foreach ($lines as $index => $line) {
                 if (!trim($line)) {
