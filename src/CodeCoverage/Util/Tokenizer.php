@@ -64,6 +64,13 @@ class Tokenizer {
         }
     }
 
+    private function tline($token) {
+        if (isset($token[3])) {
+            return $token[3];
+        }
+        throw new Exception('Scalar tokens are not yet precalculated');
+    }
+
     /**
      * @return string
      */
@@ -129,11 +136,29 @@ class Tokenizer {
     }
 
     public function tokenize() {
-        $line      = 1;
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
         $numTokens = count($tokens);
 
+        // precalculate in which line the tokens reside, for later lookaheads
+        $line      = 1;
+        for ($i = 0; $i < $numTokens; ++$i) {
+            $token =& $tokens[$i];
+
+            if (is_array($token)) {
+                $name = substr(token_name($token[0]), 2);
+                $text = $token[1];
+
+                $token[2] = $line;
+            } else {
+                $text       = $token;
+            }
+
+            $lines          = substr_count($text, "\n");
+            $line          += $lines;
+        }
+
+        $line      = 1;
         for ($i = 0; $i < $numTokens; ++$i) {
             $token = $tokens[$i];
 
@@ -147,7 +172,6 @@ class Tokenizer {
                 $tokenClass = self::$customTokens[$token];
             }
 
-            $token = new $tokenClass($text, $line, $this, $i);
             switch ($tokenClass) {
                 case 'PHP_Token_HALT_COMPILER':
                     break;
@@ -160,7 +184,7 @@ class Tokenizer {
                         'interfaces'=> $this->getInterfaces($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $token->getDocblock(),
-                        'startLine' => $line,
+                        'startLine' => $this->tline($token),
                         'endLine'   => $token->getEndLine(),
                         'package'   => $token->getPackage(),
                         'file'      => $this->filename
@@ -184,33 +208,31 @@ class Tokenizer {
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'visibility'=> $token->getVisibility(),
                         'signature' => $token->getSignature(),
-                        'startLine' => $line,
+                        'startLine' => $this->tline($token),
                         'endLine'   => $token->getEndLine(),
                         'ccn'       => $token->getCCN(),
                         'file'      => $this->filename
                     );
 
-                    if ($class === false &&
-                        $trait === false &&
-                        $interface === false) {
-                            $this->functions[$name] = $tmp;
-                        } elseif ($class !== false) {
-                            $this->classes[$class]['methods'][$name] = $tmp;
-                        } elseif ($trait !== false) {
-                            $this->traits[$trait]['methods'][$name] = $tmp;
-                        } else {
-                            $this->interfaces[$interface]['methods'][$name] = $tmp;
-                        }
-                        break;
+                    if ($class === false && $trait === false && $interface === false) {
+                        $this->functions[$name] = $tmp;
+                    } elseif ($class !== false) {
+                        $this->classes[$class]['methods'][$name] = $tmp;
+                    } elseif ($trait !== false) {
+                        $this->traits[$trait]['methods'][$name] = $tmp;
+                    } else {
+                        $this->interfaces[$interface]['methods'][$name] = $tmp;
+                    }
+                    break;
 
                 case 'PHP_Token_CLOSE_CURLY':
-                    if ($classEndLine !== false && $classEndLine == $line) {
+                    if ($classEndLine !== false && $classEndLine == $this->tline($token)) {
                         $class        = false;
                         $classEndLine = false;
-                    } elseif ($traitEndLine !== false && $traitEndLine == $line) {
+                    } elseif ($traitEndLine !== false && $traitEndLine == $this->tline($token)) {
                         $trait        = false;
                         $traitEndLine = false;
-                    } elseif ($interfaceEndLine !== false && $interfaceEndLine == $line) {
+                    } elseif ($interfaceEndLine !== false && $interfaceEndLine == $this->tline($token)) {
                         $interface        = false;
                         $interfaceEndLine = false;
                     }
