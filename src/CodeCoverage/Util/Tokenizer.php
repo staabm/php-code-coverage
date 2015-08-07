@@ -71,6 +71,70 @@ class Tokenizer {
         throw new Exception('Scalar tokens are not yet precalculated');
     }
 
+    private function tname(array $tokens, $idx) {
+        $tconst = $this->tconst($tokens[$idx]);
+
+        if ($tconst === T_REQUIRE || $tconst === T_REQUIRE_ONCE || $tconst === T_INCLUDE || $tconst === T_INCLUDE_ONCE) {
+            if ($this->tconst(tokens[$idx+2]) === T_CONSTANT_ENCAPSED_STRING) {
+                return trim($tokens[$idx+2], "'\"");
+            }
+            return null;
+        }
+
+        if ($tconst === T_FUNCTION) {
+            for ($i = $idx + 1; $i < count($tokens); $i++) {
+                $token = $tokens[$i];
+                $tconst = $this->tconst($token);
+                $tclass = $this->tclass($token);
+
+                if ($tconst === T_STRING) {
+                    $name = (string)$token;
+                    break;
+                } elseif ($tconst === T_STRING && $tclass === 'PHP_Token_AMPERSAND' && $this->tconst($tokens[$i+1]) === T_STRING) {
+                    $name = (string)$tokens[$i+1];
+                    break;
+                } elseif ($tclass === 'PHP_Token_OPEN_BRACKET') {
+                    $name = 'anonymous function';
+                    break;
+                }
+            }
+
+            if ($name != 'anonymous function') {
+                for ($i = $idx; $i; --$i) {
+                    $tconst = $this->tconst($tokens[$i]);
+                    if ($tconst === T_NAMESPACE) {
+                        $name = $this->tname($tokens, $i) . '\\' . $name;
+                        break;
+                    }
+
+                    if ($tconst === T_INTERFACE) {
+                        break;
+                    }
+                }
+            }
+
+            return $name;
+        }
+
+        if ($tconst === T_CLASS || $tconst === T_TRAIT) {
+            return (string) $tokens[$idx + 2];
+        }
+
+        if ($tconst === T_NAMESPACE) {
+            $namespace = (string)$tokens[$idx+2];
+
+            for ($i = $idx + 3;; $i += 2) {
+                if (isset($tokens[$i]) && $this->tconst($tokens[$i]) === T_NS_SEPARATOR) {
+                    $namespace .= '\\' . $tokens[$i+1];
+                } else {
+                    break;
+                }
+            }
+
+            return $namespace;
+        }
+    }
+
     /**
      * @return string
      */
@@ -216,18 +280,18 @@ class Tokenizer {
                     );
 
                     if ($this->tconst($token) === T_CLASS) {
-                        $class                 = (string)$tokens[$i + 2];
+                        $class                 = $this->tname($tokens, $i + 2);
                         $classEndLine          = $token->getEndLine();
                         $this->classes[$class] = $tmp;
                     } else {
-                        $trait                = (string)$tokens[$i + 2];
+                        $trait                = $this->tname($tokens, $i + 2);
                         $traitEndLine         = $token->getEndLine();
                         $this->traits[$trait] = $tmp;
                     }
                     break;
 
                 case 'PHP_Token_FUNCTION':
-                    $name = $token->getName();
+                    $name = $this->tname($tokens, $idx);
                     $tmp  = array(
                         'docblock'  => $token->getDocblock(),
                         'keywords'  => $this->getKeywords($tokens, $i),
