@@ -2,6 +2,9 @@
 
 class Tokenizer {
     private $filename;
+    private $functions = [];
+    private $classes = [];
+    private $traits = [];
     private $linesOfCode = array('loc' => 0, 'cloc' => 0, 'ncloc' => 0);
 
     /**
@@ -42,13 +45,14 @@ class Tokenizer {
         $this->filename = $filename;
     }
 
-    public function next() {
+    public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
         $numTokens = count($tokens);
 
         for ($i = 0; $i < $numTokens; ++$i) {
             $token = $tokens[$i];
+
             if (is_array($token)) {
                 $name = substr(token_name($token[0]), 2);
                 $text = $token[1];
@@ -69,42 +73,26 @@ class Tokenizer {
                 case 'PHP_Token_HALT_COMPILER':
                     break;
 
-                case 'PHP_Token_INTERFACE':
-                    $interface        = $token->getName();
-                    $interfaceEndLine = $token->getEndLine();
-
-                    $this->interfaces[$interface] = array(
-                        'methods'   => array(),
-                        'parent'    => $token->getParent(),
-                        'keywords'  => $token->getKeywords(),
-                        'docblock'  => $token->getDocblock(),
-                        'startLine' => $token->getLine(),
-                        'endLine'   => $interfaceEndLine,
-                        'package'   => $token->getPackage(),
-                        'file'      => $this->filename
-                    );
-                    break;
-
                 case 'PHP_Token_CLASS':
                 case 'PHP_Token_TRAIT':
                     $tmp = array(
-                    'methods'   => array(),
-                    'parent'    => $token->getParent(),
-                    'interfaces'=> $token->getInterfaces(),
-                    'keywords'  => $token->getKeywords(),
-                    'docblock'  => $token->getDocblock(),
-                    'startLine' => $token->getLine(),
-                    'endLine'   => $token->getEndLine(),
-                    'package'   => $token->getPackage(),
-                    'file'      => $this->filename
+                        'methods'   => array(),
+                        'parent'    => $token->getParent(),
+                        'interfaces'=> $token->getInterfaces(),
+                        'keywords'  => $token->getKeywords(),
+                        'docblock'  => $token->getDocblock(),
+                        'startLine' => $token->getLine(),
+                        'endLine'   => $token->getEndLine(),
+                        'package'   => $token->getPackage(),
+                        'file'      => $this->filename
                     );
 
                     if ($token instanceof PHP_Token_CLASS) {
-                        $class                 = $token->getName();
+                        $class                 = (string)$tokens[$i + 2];
                         $classEndLine          = $token->getEndLine();
                         $this->classes[$class] = $tmp;
                     } else {
-                        $trait                = $token->getName();
+                        $trait                = (string)$tokens[$i + 2];
                         $traitEndLine         = $token->getEndLine();
                         $this->traits[$trait] = $tmp;
                     }
@@ -179,14 +167,6 @@ class Tokenizer {
             } elseif ($name != 'WHITESPACE') {
                 $lastNonWhitespaceTokenWasDoubleColon = false;
             }
-
-            if (false) {
-                yield "class" => [];
-            } else if (false) {
-                yield "trait" => [];
-            } else if (false) {
-                yield "function" => [];
-            }
         }
 
         $this->linesOfCode['loc']   = substr_count($sourceCode, "\n");
@@ -196,5 +176,17 @@ class Tokenizer {
 
     public function getLinesOfCode() {
         return $this->linesOfCode;
+    }
+
+    public function getClasses() {
+        return $this->classes;
+    }
+
+    public function getTraits() {
+        return $this->traits;
+    }
+
+    public function getFunctions() {
+        return $this->functions;
     }
 }
