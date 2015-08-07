@@ -57,12 +57,7 @@ class Tokenizer {
                 $name = substr(token_name($token[0]), 2);
                 $text = $token[1];
 
-                if ($lastNonWhitespaceTokenWasDoubleColon && $name == 'CLASS') {
-                    $name = 'CLASS_NAME_CONSTANT';
-                }
-
                 $tokenClass = 'PHP_Token_' . $name;
-
             } else {
                 $text       = $token;
                 $tokenClass = self::$customTokens[$token];
@@ -161,12 +156,6 @@ class Tokenizer {
 
             $lines          = substr_count($text, "\n");
             $line          += $lines;
-
-            if ($name == 'DOUBLE_COLON') {
-                $lastNonWhitespaceTokenWasDoubleColon = true;
-            } elseif ($name != 'WHITESPACE') {
-                $lastNonWhitespaceTokenWasDoubleColon = false;
-            }
         }
 
         $this->linesOfCode['loc']   = substr_count($sourceCode, "\n");
