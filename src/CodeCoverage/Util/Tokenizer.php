@@ -190,7 +190,7 @@ class Tokenizer {
                         'file'      => $this->filename
                     );
 
-                    if ($token instanceof PHP_Token_CLASS) {
+                    if ($this->tconst($token) === T_CLASS) {
                         $class                 = (string)$tokens[$i + 2];
                         $classEndLine          = $token->getEndLine();
                         $this->classes[$class] = $tmp;
