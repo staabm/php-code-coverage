@@ -351,17 +351,23 @@ class PHP_CodeCoverage_Report_Node_File extends PHP_CodeCoverage_Report_Node
      */
     protected function calculateStatistics()
     {
-        if ($this->cacheTokens) {
-            $tokens = PHP_Token_Stream_CachingFactory::get($this->getPath());
-        } else {
-            $tokens = new PHP_Token_Stream($this->getPath());
+        $tokenizer = new Tokenizer($this->getPath());
+        $classes = $traits = $functions = array();
+        foreach($tokenizer as $tokenName => $token) {
+            switch ($tokenName) {
+                case "class":
+                    $classes[] = $token;
+                    break;
+                case "trait":
+                    $traits[] = $token;
+                    break;
+                case "function":
+                    $functions[] = $token;
+                    break;
+            }
         }
-
-        $this->processClasses($tokens->getClasses());
-        $this->processTraits($tokens->getTraits());
-        $this->processFunctions($tokens->getFunctions());
-        $this->linesOfCode = $tokens->getLinesOfCode();
-        unset($tokens);
+        $this->linesOfCode = $tokenizer->getLinesOfCode();
+        unset($tokenizer);
 
         for ($lineNumber = 1; $lineNumber <= $this->linesOfCode['loc']; $lineNumber++) {
             if (isset($this->startLines[$lineNumber])) {
