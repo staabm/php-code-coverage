@@ -64,6 +64,33 @@ class Tokenizer {
         }
     }
 
+    /**
+     * @return string
+     */
+    private function getKeywords(array $tokens, $idx) {
+        $keywords = array();
+
+        for ($i = $idx - 2; $i > $idx - 7; $i -= 2) {
+            if (isset($tokens[$i])) {
+                $tconst = $this->tconst($tokens[$i]);
+
+                if ($tconst === T_PRIVATE || $tconst === T_PROTECTED || $tconst === T_PUBLIC) {
+                    continue;
+                }
+
+                if ($tconst === T_STATIC) {
+                    $keywords[] = 'static';
+                } else if ($tconst === T_FINAL) {
+                    $keywords[] = 'final';
+                } else if ($tconst === T_ABSTRACT) {
+                    $keywords[] = 'abstract';
+                }
+            }
+        }
+
+        return implode(',', $keywords);
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -123,7 +150,7 @@ class Tokenizer {
                         'methods'   => array(),
                         'parent'    => $parent,
                         'interfaces'=> $interfaces,
-                        'keywords'  => $token->getKeywords(),
+                        'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $token->getDocblock(),
                         'startLine' => $token->getLine(),
                         'endLine'   => $token->getEndLine(),
@@ -146,7 +173,7 @@ class Tokenizer {
                     $name = $token->getName();
                     $tmp  = array(
                         'docblock'  => $token->getDocblock(),
-                        'keywords'  => $token->getKeywords(),
+                        'keywords'  => $this->getKeywords($tokens, $i),
                         'visibility'=> $token->getVisibility(),
                         'signature' => $token->getSignature(),
                         'startLine' => $token->getLine(),
