@@ -135,6 +135,31 @@ class Tokenizer {
         return $interfaces;
     }
 
+    /**
+     * @return string
+     */
+    private function getVisibility(array $tokens, $idx)
+    {
+        for ($i = $idx - 2; $i > $idx - 7; $i -= 2) {
+            if (isset($tokens[$i])) {
+                $tconst = $this->tconst($tokens[$i]);
+
+                if ($tconst === T_PRIVATE) {
+                    return "private";
+                } else if($tconst === T_PROTECTED) {
+                    return "protected";
+                }else if ($tconst === T_PUBLIC) {
+                    return "public";
+                }
+
+                if (!($tconst === T_STATIC || $tconst === T_FINAL || $tconst === T_ABSTRACT)) {
+                    // no keywords; stop visibility search
+                    break;
+                }
+            }
+        }
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -206,7 +231,7 @@ class Tokenizer {
                     $tmp  = array(
                         'docblock'  => $token->getDocblock(),
                         'keywords'  => $this->getKeywords($tokens, $i),
-                        'visibility'=> $token->getVisibility(),
+                        'visibility'=> $this->getVisibility($tokens, $i),
                         'signature' => $token->getSignature(),
                         'startLine' => $this->tline($token),
                         'endLine'   => $token->getEndLine(),
