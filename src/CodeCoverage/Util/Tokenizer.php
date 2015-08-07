@@ -204,18 +204,15 @@ class Tokenizer {
                         break;
 
                 case 'PHP_Token_CLOSE_CURLY':
-                    if ($classEndLine !== false &&
-                    $classEndLine == $line) {
+                    if ($classEndLine !== false && $classEndLine == $line) {
                         $class        = false;
                         $classEndLine = false;
-                    } elseif ($traitEndLine !== false &&
-                        $traitEndLine == $line) {
-                            $trait        = false;
-                            $traitEndLine = false;
-                    } elseif ($interfaceEndLine !== false &&
-                        $interfaceEndLine == $line) {
-                            $interface        = false;
-                            $interfaceEndLine = false;
+                    } elseif ($traitEndLine !== false && $traitEndLine == $line) {
+                        $trait        = false;
+                        $traitEndLine = false;
+                    } elseif ($interfaceEndLine !== false && $interfaceEndLine == $line) {
+                        $interface        = false;
+                        $interfaceEndLine = false;
                     }
                     break;
 
