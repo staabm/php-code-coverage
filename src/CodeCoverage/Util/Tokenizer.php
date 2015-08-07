@@ -91,6 +91,21 @@ class Tokenizer {
         return implode(',', $keywords);
     }
 
+    private function getParent(array $tokens, $i) {
+        $parent = false;
+        if ($this->tconst($tokens[$i+4]) === T_EXTENDS) {
+            $ci         = $i + 6;
+            $className = (string)$tokens[$ci];
+
+            while (isset($tokens[$ci+1]) && !($this->tconst($tokens[$ci+1]) === T_WHITESPACE)) {
+                $className .= (string)$tokens[++$ci];
+            }
+
+            $parent = $className;
+        }
+        return $parent;
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -116,18 +131,6 @@ class Tokenizer {
 
                 case 'PHP_Token_CLASS':
                 case 'PHP_Token_TRAIT':
-                    $parent = false;
-                    if ($this->tconst($tokens[$i+4]) === T_EXTENDS) {
-                        $ci         = $i + 6;
-                        $className = (string)$tokens[$ci];
-
-                        while (isset($tokens[$ci+1]) && !($this->tconst($tokens[$ci+1]) === T_WHITESPACE)) {
-                            $className .= (string)$tokens[++$ci];
-                        }
-
-                        $parent = $className;
-                    }
-
                     $interfaces = false;
                     if (isset($tokens[$i + 4]) && $this->tid($tokens[$i + 4]) === T_IMPLEMENTS ||
                         isset($tokens[$i + 8]) && $this->tid($tokens[$i + 8]) === T_IMPLEMENTS) {
@@ -148,7 +151,7 @@ class Tokenizer {
 
                     $tmp = array(
                         'methods'   => array(),
-                        'parent'    => $parent,
+                        'parent'    => $this->getParent($tokens, $i),
                         'interfaces'=> $interfaces,
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $token->getDocblock(),
