@@ -193,22 +193,10 @@ class Tokenizer {
                         $trait === false &&
                         $interface === false) {
                             $this->functions[$name] = $tmp;
-
-                            for ($line = $tmp['startLine']; $line <= $tmp['endLine']; $line++) {
-                                $this->lineToFunctionMap[$line] = $name;
-                            }
                         } elseif ($class !== false) {
                             $this->classes[$class]['methods'][$name] = $tmp;
-
-                            for ($line = $tmp['startLine']; $line <= $tmp['endLine']; $line++) {
-                                $this->lineToFunctionMap[$line] = $class . '::' . $name;
-                            }
                         } elseif ($trait !== false) {
                             $this->traits[$trait]['methods'][$name] = $tmp;
-
-                            for ($line = $tmp['startLine']; $line <= $tmp['endLine']; $line++) {
-                                $this->lineToFunctionMap[$line] = $trait . '::' . $name;
-                            }
                         } else {
                             $this->interfaces[$interface]['methods'][$name] = $tmp;
                         }
