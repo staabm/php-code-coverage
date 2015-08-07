@@ -129,6 +129,7 @@ class Tokenizer {
     }
 
     public function tokenize() {
+        $line      = 1;
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
         $numTokens = count($tokens);
@@ -159,7 +160,7 @@ class Tokenizer {
                         'interfaces'=> $this->getInterfaces($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $token->getDocblock(),
-                        'startLine' => $token->getLine(),
+                        'startLine' => $line,
                         'endLine'   => $token->getEndLine(),
                         'package'   => $token->getPackage(),
                         'file'      => $this->filename
@@ -183,7 +184,7 @@ class Tokenizer {
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'visibility'=> $token->getVisibility(),
                         'signature' => $token->getSignature(),
-                        'startLine' => $token->getLine(),
+                        'startLine' => $line,
                         'endLine'   => $token->getEndLine(),
                         'ccn'       => $token->getCCN(),
                         'file'      => $this->filename
@@ -204,15 +205,15 @@ class Tokenizer {
 
                 case 'PHP_Token_CLOSE_CURLY':
                     if ($classEndLine !== false &&
-                    $classEndLine == $token->getLine()) {
+                    $classEndLine == $line) {
                         $class        = false;
                         $classEndLine = false;
                     } elseif ($traitEndLine !== false &&
-                        $traitEndLine == $token->getLine()) {
+                        $traitEndLine == $line) {
                             $trait        = false;
                             $traitEndLine = false;
                     } elseif ($interfaceEndLine !== false &&
-                        $interfaceEndLine == $token->getLine()) {
+                        $interfaceEndLine == $line) {
                             $interface        = false;
                             $interfaceEndLine = false;
                     }
