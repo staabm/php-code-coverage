@@ -106,6 +106,28 @@ class Tokenizer {
         return $parent;
     }
 
+    private function getInterfaces(array $tokens, $i) {
+        $interfaces = false;
+        if (isset($tokens[$i + 4]) && $this->tid($tokens[$i + 4]) === T_IMPLEMENTS ||
+            isset($tokens[$i + 8]) && $this->tid($tokens[$i + 8]) === T_IMPLEMENTS) {
+            if ($this->tid($tokens[$i + 4]) === T_IMPLEMENTS) {
+                $ii = $i + 3;
+            } else {
+                $ii = $i + 7;
+            }
+
+            while (!$this->tclass($tokens[$ii+1]) === 'PHP_Token_OPEN_CURLY') {
+                $ii++;
+
+                if ($this->tconst($tokens[$ii]) === T_STRING) {
+                    $interfaces[] = (string)$tokens[$ii];
+                }
+            }
+        }
+
+        return $interfaces;
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -131,28 +153,10 @@ class Tokenizer {
 
                 case 'PHP_Token_CLASS':
                 case 'PHP_Token_TRAIT':
-                    $interfaces = false;
-                    if (isset($tokens[$i + 4]) && $this->tid($tokens[$i + 4]) === T_IMPLEMENTS ||
-                        isset($tokens[$i + 8]) && $this->tid($tokens[$i + 8]) === T_IMPLEMENTS) {
-                        if ($this->tid($tokens[$i + 4]) === T_IMPLEMENTS) {
-                            $ii = $i + 3;
-                        } else {
-                            $ii = $i + 7;
-                        }
-
-                        while (!$this->tclass($tokens[$ii+1]) === 'PHP_Token_OPEN_CURLY') {
-                            $ii++;
-
-                            if ($this->tconst($tokens[$ii]) === T_STRING) {
-                                $interfaces[] = (string)$tokens[$ii];
-                            }
-                        }
-                    }
-
                     $tmp = array(
                         'methods'   => array(),
                         'parent'    => $this->getParent($tokens, $i),
-                        'interfaces'=> $interfaces,
+                        'interfaces'=> $this->getInterfaces($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $token->getDocblock(),
                         'startLine' => $token->getLine(),
