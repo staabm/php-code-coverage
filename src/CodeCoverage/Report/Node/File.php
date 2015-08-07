@@ -357,9 +357,9 @@ class PHP_CodeCoverage_Report_Node_File extends PHP_CodeCoverage_Report_Node
             $tokens = new PHP_Token_Stream($this->getPath());
         }
 
-        $this->processClasses($tokens);
-        $this->processTraits($tokens);
-        $this->processFunctions($tokens);
+        $this->processClasses($tokens->getClasses());
+        $this->processTraits($tokens->getTraits());
+        $this->processFunctions($tokens->getFunctions());
         $this->linesOfCode = $tokens->getLinesOfCode();
         unset($tokens);
 
@@ -510,11 +510,8 @@ class PHP_CodeCoverage_Report_Node_File extends PHP_CodeCoverage_Report_Node
     /**
      * @param PHP_Token_Stream $tokens
      */
-    protected function processClasses(PHP_Token_Stream $tokens)
+    protected function processClasses(array $classes)
     {
-        $classes = $tokens->getClasses();
-        unset($tokens);
-
         $link = $this->getId() . '.html#';
 
         foreach ($classes as $className => $class) {
@@ -557,11 +554,8 @@ class PHP_CodeCoverage_Report_Node_File extends PHP_CodeCoverage_Report_Node
     /**
      * @param PHP_Token_Stream $tokens
      */
-    protected function processTraits(PHP_Token_Stream $tokens)
+    protected function processTraits(array $traits)
     {
-        $traits = $tokens->getTraits();
-        unset($tokens);
-
         $link = $this->getId() . '.html#';
 
         foreach ($traits as $traitName => $trait) {
@@ -604,11 +598,8 @@ class PHP_CodeCoverage_Report_Node_File extends PHP_CodeCoverage_Report_Node
     /**
      * @param PHP_Token_Stream $tokens
      */
-    protected function processFunctions(PHP_Token_Stream $tokens)
+    protected function processFunctions(array $functions)
     {
-        $functions = $tokens->getFunctions();
-        unset($tokens);
-
         $link = $this->getId() . '.html#';
 
         foreach ($functions as $functionName => $function) {
