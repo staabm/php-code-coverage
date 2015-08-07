@@ -52,6 +52,18 @@ class Tokenizer {
         return null;
     }
 
+    private function tclass($token) {
+        if (is_array($token)) {
+            $name = substr(token_name($token[0]), 2);
+            $text = $token[1];
+
+            return 'PHP_Token_' . $name;
+        } else {
+            $text       = $token;
+            return self::$customTokens[$token];
+        }
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -89,10 +101,28 @@ class Tokenizer {
                         $parent = $className;
                     }
 
+                    $interfaces = false;
+                    if (isset($tokens[$i + 4]) && $this->tid($tokens[$i + 4]) === T_IMPLEMENTS ||
+                        isset($tokens[$i + 8]) && $this->tid($tokens[$i + 8]) === T_IMPLEMENTS) {
+                        if ($this->tid($tokens[$i + 4]) === T_IMPLEMENTS) {
+                            $ii = $i + 3;
+                        } else {
+                            $ii = $i + 7;
+                        }
+
+                        while (!$this->tclass($tokens[$ii+1]) === 'PHP_Token_OPEN_CURLY') {
+                            $ii++;
+
+                            if ($this->tconst($tokens[$ii]) === T_STRING) {
+                                $interfaces[] = (string)$tokens[$ii];
+                            }
+                        }
+                    }
+
                     $tmp = array(
                         'methods'   => array(),
                         'parent'    => $parent,
-                        'interfaces'=> $token->getInterfaces(),
+                        'interfaces'=> $interfaces,
                         'keywords'  => $token->getKeywords(),
                         'docblock'  => $token->getDocblock(),
                         'startLine' => $token->getLine(),
