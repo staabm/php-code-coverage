@@ -310,6 +310,68 @@ class PHP_CodeCoverage_Util_Tokenizer {
         return $this->tline($tokens[$this->getEndTokenId($tokens, $idx)]);
     }
 
+    /**
+     * @return array
+     */
+    private function getPackage(array $tokens, $idx)
+    {
+        $token = $tokens[$idx];
+        $className  = $this->tname($token);
+        $docComment = $this->getDocblock($tokens, $idx);
+
+        $result = array(
+            'namespace'   => '',
+            'fullPackage' => '',
+            'category'    => '',
+            'package'     => '',
+            'subpackage'  => ''
+        );
+
+        for ($i = $idx; $i; --$i) {
+            $tconst = $this->tconst($tokens[$i]);
+            if ($tconst === T_NAMESPACE) {
+                $result['namespace'] = $this->tname($tokens[$i]);
+                break;
+            }
+        }
+
+        if (preg_match('/@category[\s]+([\.\w]+)/', $docComment, $matches)) {
+            $result['category'] = $matches[1];
+        }
+
+        if (preg_match('/@package[\s]+([\.\w]+)/', $docComment, $matches)) {
+            $result['package']     = $matches[1];
+            $result['fullPackage'] = $matches[1];
+        }
+
+        if (preg_match('/@subpackage[\s]+([\.\w]+)/', $docComment, $matches)) {
+            $result['subpackage']   = $matches[1];
+            $result['fullPackage'] .= '.' . $matches[1];
+        }
+
+        if (empty($result['fullPackage'])) {
+            $result['fullPackage'] = $this->arrayToName(
+                explode('_', str_replace('\\', '_', $className)),
+                '.'
+            );
+        }
+
+        return $result;
+    }
+
+    private function arrayToName(array $parts, $join = '\\')
+    {
+        $result = '';
+
+        if (count($parts) > 1) {
+            array_pop($parts);
+
+            $result = join($join, $parts);
+        }
+
+        return $result;
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -363,7 +425,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'docblock'  => $this->getDocblock($tokens, $i),
                         'startLine' => $this->tline($token),
                         'endLine'   => $endLine,
-                        'package'   => $token->getPackage(),
+                        'package'   => $this->getPackage($tokens, $i),
                         'file'      => $this->filename
                     );
 
