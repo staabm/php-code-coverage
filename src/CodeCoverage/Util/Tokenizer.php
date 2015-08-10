@@ -291,7 +291,7 @@ class Tokenizer {
                     break;
 
                 case 'PHP_Token_FUNCTION':
-                    $name = $this->tname($tokens, $idx);
+                    $tname = $this->tname($tokens, $idx);
                     $tmp  = array(
                         'docblock'  => $token->getDocblock(),
                         'keywords'  => $this->getKeywords($tokens, $i),
@@ -304,13 +304,13 @@ class Tokenizer {
                     );
 
                     if ($class === false && $trait === false && $interface === false) {
-                        $this->functions[$name] = $tmp;
+                        $this->functions[$tname] = $tmp;
                     } elseif ($class !== false) {
-                        $this->classes[$class]['methods'][$name] = $tmp;
+                        $this->classes[$class]['methods'][$tname] = $tmp;
                     } elseif ($trait !== false) {
-                        $this->traits[$trait]['methods'][$name] = $tmp;
+                        $this->traits[$trait]['methods'][$tname] = $tmp;
                     } else {
-                        $this->interfaces[$interface]['methods'][$name] = $tmp;
+                        $this->interfaces[$interface]['methods'][$tname] = $tmp;
                     }
                     break;
 
