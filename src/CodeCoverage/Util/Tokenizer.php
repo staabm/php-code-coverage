@@ -372,6 +372,31 @@ class PHP_CodeCoverage_Util_Tokenizer {
         return $result;
     }
 
+    /**
+     * @return string
+     */
+    private function getSignature(array $tokens, $idx)
+    {
+        $token = $tokens[$idx];
+        if ($this->tname($token) == 'anonymous function') {
+            $signature = 'anonymous function';
+            $i               = $idx + 1;
+        } else {
+            $signature = '';
+            $i               = $idx + 2;
+        }
+
+        while (isset($tokens[$i]) && $tclass = $this->tclass($tokens[$i]) &&
+               $tclass !== 'PHP_Token_OPEN_CURLY' &&
+               $tclass !== 'PHP_Token_SEMICOLON') {
+            $signature .= $tokens[$i++];
+        }
+
+        $signature = trim($signature);
+
+        return $signature;
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -446,7 +471,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'docblock'  => $this->getDocblock($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'visibility'=> $this->getVisibility($tokens, $i),
-                        'signature' => $token->getSignature(),
+                        'signature' => $this->getSignature($tokens, $i),
                         'startLine' => $this->tline($token),
                         'endLine'   => $this->getEndLine($tokens, $i),
                         'ccn'       => $token->getCCN(),
