@@ -397,6 +397,41 @@ class PHP_CodeCoverage_Util_Tokenizer {
         return $signature;
     }
 
+    /**
+     * @return integer
+     */
+    private function getCCN($tokens, $idx)
+    {
+        $ccn = 1;
+        $end       = $this->getEndTokenId($tokens, $idx);
+
+        $ccnTokens = array(
+            T_IF,
+            T_ELSEIF,
+            T_FOR,
+            T_FOREACH,
+            T_WHILE,
+            T_CASE,
+            T_CATCH,
+            T_BOOLEAN_AND,
+            T_LOGICAL_AND,
+            T_BOOLEAN_OR,
+            T_LOGICAL_OR
+        );
+        for ($i = $idx; $i <= $end; $i++) {
+            $tconst = $this->tconst($tokens[$i]);
+            if (in_array($tconst, $ccnTokens)) {
+                $ccn++;
+            }
+            $tclass = $this->tclass($tokens[$i]);
+            if ($tclass === 'PHP_Token_QUESTION_MARK') {
+                $ccn++;
+            }
+        }
+
+        return $ccn;
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -474,7 +509,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'signature' => $this->getSignature($tokens, $i),
                         'startLine' => $this->tline($token),
                         'endLine'   => $this->getEndLine($tokens, $i),
-                        'ccn'       => $token->getCCN(),
+                        'ccn'       => $this->getCCN($tokens, $i),
                         'file'      => $this->filename
                     );
 
