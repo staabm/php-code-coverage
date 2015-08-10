@@ -224,6 +224,47 @@ class PHP_CodeCoverage_Util_Tokenizer {
         }
     }
 
+    /**
+     * Get the docblock for this token
+     *
+     * This method will fetch the docblock belonging to the current token. The
+     * docblock must be placed on the line directly above the token to be
+     * recognized.
+     *
+     * @return string|null Returns the docblock as a string if found
+     */
+    private function getDocblock(array $tokens, $idx) {
+        $currentLineNumber = $this->tline($tokens[$idx]);
+        $prevLineNumber    = $currentLineNumber - 1;
+
+        for ($i = $idx - 1; $i; $i--) {
+            if (!isset($tokens[$i])) {
+                return;
+            }
+
+            $token = $tokens[$i];
+            $tconst = $this->tconst($token);
+
+            if ($tconst === T_FUNCTION || $tconst === T_CLASS || $tconst === T_TRAIT) {
+                // Some other trait, class or function, no docblock can be
+                // used for the current token
+                break;
+            }
+
+            $line = $this->tline($token);
+
+            if ($line == $currentLineNumber || ($line == $prevLineNumber && $tconst === T_WHITESPACE)) {
+                continue;
+            }
+
+            if ($line < $currentLineNumber && $tconst === T_DOC_COMMENT) {
+                break;
+            }
+
+            return (string)$token;
+        }
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -272,7 +313,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'parent'    => $this->getParent($tokens, $i),
                         'interfaces'=> $this->getInterfaces($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
-                        'docblock'  => $token->getDocblock(),
+                        'docblock'  => $this->getDocblock($tokens, $i),
                         'startLine' => $this->tline($token),
                         'endLine'   => $token->getEndLine(),
                         'package'   => $token->getPackage(),
@@ -293,7 +334,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 case 'PHP_Token_FUNCTION':
                     $tname = $this->tname($tokens, $idx);
                     $tmp  = array(
-                        'docblock'  => $token->getDocblock(),
+                        'docblock'  => $this->getDocblock($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'visibility'=> $this->getVisibility($tokens, $i),
                         'signature' => $token->getSignature(),
