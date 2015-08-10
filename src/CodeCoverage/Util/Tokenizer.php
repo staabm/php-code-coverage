@@ -265,6 +265,51 @@ class PHP_CodeCoverage_Util_Tokenizer {
         }
     }
 
+    /**
+     * @return integer
+     */
+    private function getEndTokenId(array $tokens, $idx)
+    {
+        $block  = 0;
+        $i      = $idx;
+        $endTokenId = null;
+
+        while ($endTokenId === null && isset($tokens[$i])) {
+            $token = $tokens[$i];
+            $tclass = $this->tclass($token);
+            $tconst = $this->tconst($token);
+            if ($tclass === 'PHP_Token_OPEN_CURLY' || $tclass === 'PHP_Token_CURLY_OPEN') {
+                $block++;
+            } elseif ($tclass ===  'PHP_Token_CLOSE_CURLY') {
+                $block--;
+
+                if ($block === 0) {
+                    $endTokenId = $i;
+                }
+            } elseif (($tconst === T_FUNCTION || $tconst === T_NAMESPACE) && $tclass === 'PHP_Token_SEMICOLON') {
+                if ($block === 0) {
+                    $endTokenId = $i;
+                }
+            }
+
+            $i++;
+        }
+
+        if ($endTokenId === null) {
+            $endTokenId = $idx;
+        }
+
+        return $endTokenId;
+    }
+
+    /**
+     * @return integer
+     */
+    private function getEndLine(array $tokens, $idx)
+    {
+        return $this->tline($tokens[$this->getEndTokenId($tokens, $idx)]);
+    }
+
     public function tokenize() {
         $sourceCode     = file_get_contents($this->filename);
         $tokens = token_get_all($sourceCode);
@@ -308,6 +353,8 @@ class PHP_CodeCoverage_Util_Tokenizer {
 
                 case 'PHP_Token_CLASS':
                 case 'PHP_Token_TRAIT':
+                    $endLine = $this->getEndLine($tokens, $i);
+
                     $tmp = array(
                         'methods'   => array(),
                         'parent'    => $this->getParent($tokens, $i),
@@ -315,18 +362,18 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $this->getDocblock($tokens, $i),
                         'startLine' => $this->tline($token),
-                        'endLine'   => $token->getEndLine(),
+                        'endLine'   => $endLine,
                         'package'   => $token->getPackage(),
                         'file'      => $this->filename
                     );
 
                     if ($this->tconst($token) === T_CLASS) {
                         $class                 = $this->tname($tokens, $i + 2);
-                        $classEndLine          = $token->getEndLine();
+                        $classEndLine          = $endLine;
                         $this->classes[$class] = $tmp;
                     } else {
                         $trait                = $this->tname($tokens, $i + 2);
-                        $traitEndLine         = $token->getEndLine();
+                        $traitEndLine         = $endLine;
                         $this->traits[$trait] = $tmp;
                     }
                     break;
@@ -339,7 +386,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'visibility'=> $this->getVisibility($tokens, $i),
                         'signature' => $token->getSignature(),
                         'startLine' => $this->tline($token),
-                        'endLine'   => $token->getEndLine(),
+                        'endLine'   => $this->getEndLine($tokens, $i),
                         'ccn'       => $token->getCCN(),
                         'file'      => $this->filename
                     );
