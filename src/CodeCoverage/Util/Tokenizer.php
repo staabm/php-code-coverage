@@ -1,6 +1,6 @@
 <?php
 
-class Tokenizer {
+class PHP_CodeCoverage_Util_Tokenizer {
     private $filename;
     private $functions = [];
     private $classes = [];
