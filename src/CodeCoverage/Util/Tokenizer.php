@@ -323,7 +323,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
     private function getPackage(array $tokens, $idx)
     {
         $token = $tokens[$idx];
-        $className  = $this->tname($token);
+        $className  = $this->tname($tokens, $idx);
         $docComment = $this->getDocblock($tokens, $idx);
 
         $result = array(
@@ -337,7 +337,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
         for ($i = $idx; $i; --$i) {
             $tconst = $this->tconst($tokens[$i]);
             if ($tconst === T_NAMESPACE) {
-                $result['namespace'] = $this->tname($tokens[$i]);
+                $result['namespace'] = $this->tname($tokens, $i);
                 break;
             }
         }
@@ -384,8 +384,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
      */
     private function getSignature(array $tokens, $idx)
     {
-        $token = $tokens[$idx];
-        if ($this->tname($token) == 'anonymous function') {
+        if ($this->tname($tokens, $idx) == 'anonymous function') {
             $signature = 'anonymous function';
             $i               = $idx + 1;
         } else {
