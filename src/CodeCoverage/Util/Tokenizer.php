@@ -184,9 +184,9 @@ class PHP_CodeCoverage_Util_Tokenizer {
 
     private function getInterfaces(array $tokens, $i) {
         $interfaces = false;
-        if (isset($tokens[$i + 4]) && $this->tid($tokens[$i + 4]) === T_IMPLEMENTS ||
-            isset($tokens[$i + 8]) && $this->tid($tokens[$i + 8]) === T_IMPLEMENTS) {
-            if ($this->tid($tokens[$i + 4]) === T_IMPLEMENTS) {
+        if (isset($tokens[$i + 4]) && $this->tconst($tokens[$i + 4]) === T_IMPLEMENTS ||
+            isset($tokens[$i + 8]) && $this->tconst($tokens[$i + 8]) === T_IMPLEMENTS) {
+            if ($this->tconst($tokens[$i + 4]) === T_IMPLEMENTS) {
                 $ii = $i + 3;
             } else {
                 $ii = $i + 7;
