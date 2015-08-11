@@ -5,6 +5,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
     private $functions = [];
     private $classes = [];
     private $traits = [];
+    private $tlines = [];
     private $linesOfCode = array('loc' => 0, 'cloc' => 0, 'ncloc' => 0);
 
     /**
@@ -64,11 +65,8 @@ class PHP_CodeCoverage_Util_Tokenizer {
         }
     }
 
-    private function tline($token) {
-        if (isset($token[3])) {
-            return $token[3];
-        }
-        throw new Exception('Scalar tokens are not yet precalculated');
+    private function tline($idx) {
+        return $this->tlines[$idx];
     }
 
     private function tname(array $tokens, $idx) {
@@ -241,7 +239,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
      * @return string|null Returns the docblock as a string if found
      */
     private function getDocblock(array $tokens, $idx) {
-        $currentLineNumber = $this->tline($tokens[$idx]);
+        $currentLineNumber = $this->tline($idx);
         $prevLineNumber    = $currentLineNumber - 1;
 
         for ($i = $idx - 1; $i; $i--) {
@@ -258,7 +256,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 break;
             }
 
-            $line = $this->tline($token);
+            $line = $this->tline($i);
 
             if ($line == $currentLineNumber || ($line == $prevLineNumber && $tconst === T_WHITESPACE)) {
                 continue;
@@ -314,7 +312,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
      */
     private function getEndLine(array $tokens, $idx)
     {
-        return $this->tline($tokens[$this->getEndTokenId($tokens, $idx)]);
+        return $this->tline($this->getEndTokenId($tokens, $idx));
     }
 
     /**
@@ -446,16 +444,16 @@ class PHP_CodeCoverage_Util_Tokenizer {
         // precalculate in which line the tokens reside, for later lookaheads
         $line      = 1;
         for ($i = 0; $i < $numTokens; ++$i) {
-            $token =& $tokens[$i];
+            $token = $tokens[$i];
 
             if (is_array($token)) {
                 $name = substr(token_name($token[0]), 2);
                 $text = $token[1];
-
-                $token[2] = $line;
             } else {
                 $text       = $token;
             }
+
+            $this->tlines[$i] = $line;
 
             $lines          = substr_count($text, "\n");
             $line          += $lines;
@@ -489,7 +487,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'interfaces'=> $this->getInterfaces($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'docblock'  => $this->getDocblock($tokens, $i),
-                        'startLine' => $this->tline($token),
+                        'startLine' => $this->tline($i),
                         'endLine'   => $endLine,
                         'package'   => $this->getPackage($tokens, $i),
                         'file'      => $this->filename
@@ -513,7 +511,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'keywords'  => $this->getKeywords($tokens, $i),
                         'visibility'=> $this->getVisibility($tokens, $i),
                         'signature' => $this->getSignature($tokens, $i),
-                        'startLine' => $this->tline($token),
+                        'startLine' => $this->tline($i),
                         'endLine'   => $this->getEndLine($tokens, $i),
                         'ccn'       => $this->getCCN($tokens, $i),
                         'file'      => $this->filename
@@ -531,13 +529,13 @@ class PHP_CodeCoverage_Util_Tokenizer {
                     break;
 
                 case 'PHP_Token_CLOSE_CURLY':
-                    if ($classEndLine !== false && $classEndLine == $this->tline($token)) {
+                    if ($classEndLine !== false && $classEndLine == $this->tline($i)) {
                         $class        = false;
                         $classEndLine = false;
-                    } elseif ($traitEndLine !== false && $traitEndLine == $this->tline($token)) {
+                    } elseif ($traitEndLine !== false && $traitEndLine == $this->tline($i)) {
                         $trait        = false;
                         $traitEndLine = false;
-                    } elseif ($interfaceEndLine !== false && $interfaceEndLine == $this->tline($token)) {
+                    } elseif ($interfaceEndLine !== false && $interfaceEndLine == $this->tline($i)) {
                         $interface        = false;
                         $interfaceEndLine = false;
                     }
