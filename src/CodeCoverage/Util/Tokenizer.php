@@ -88,7 +88,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 if ($tconst === T_STRING) {
                     $name = $this->tstring($token);
                     break;
-                } elseif ($tconst === T_STRING && $tclass === 'PHP_Token_AMPERSAND' && $this->tconst($tokens[$i+1]) === T_STRING) {
+                } elseif ($tclass === 'PHP_Token_AMPERSAND' && $this->tconst($tokens[$i+1]) === T_STRING) {
                     $name = $this->tstring($tokens[$i+1]);
                     break;
                 } elseif ($tclass === 'PHP_Token_OPEN_BRACKET') {
@@ -105,7 +105,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         break;
                     }
 
-                    if ($tconst === T_INTERFACE) {
+                    if ($tconst === T_INTERFACE || $tconst === T_CLASS || $tconst === T_TRAIT) {
                         break;
                     }
                 }
@@ -114,7 +114,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
             return $name;
         }
 
-        if ($tconst === T_CLASS || $tconst === T_TRAIT) {
+        if ($tconst === T_INTERFACE || $tconst === T_CLASS || $tconst === T_TRAIT) {
             return $this->tstring($tokens[$idx + 2]);
         }
 
@@ -262,7 +262,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 continue;
             }
 
-            if ($line < $currentLineNumber && $tconst === T_DOC_COMMENT) {
+            if ($line < $currentLineNumber && $tconst !== T_DOC_COMMENT) {
                 break;
             }
 
@@ -390,7 +390,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
             $i               = $idx + 2;
         }
 
-        while (isset($tokens[$i]) && $tclass = $this->tclass($tokens[$i]) &&
+        while (isset($tokens[$i]) && ($tclass = $this->tclass($tokens[$i])) &&
                $tclass !== 'PHP_Token_OPEN_CURLY' &&
                $tclass !== 'PHP_Token_SEMICOLON') {
             $signature .= $this->tstring($tokens[$i++]);
@@ -459,6 +459,12 @@ class PHP_CodeCoverage_Util_Tokenizer {
             $line          += $lines;
         }
 
+        $class            = false;
+        $classEndLine     = false;
+        $trait            = false;
+        $traitEndLine     = false;
+        $interface        = false;
+        $interfaceEndLine = false;
         $line      = 1;
         for ($i = 0; $i < $numTokens; ++$i) {
             $token = $tokens[$i];
@@ -473,8 +479,27 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 $tokenClass = self::$customTokens[$token];
             }
 
+            $lines          = substr_count($text, "\n");
+            $line          += $lines;
+
             switch ($tokenClass) {
                 case 'PHP_Token_HALT_COMPILER':
+                    break 2;
+
+                case 'PHP_Token_INTERFACE':
+                    $interface        = $this->tname($tokens, $i);
+                    $interfaceEndLine = $this->getEndLine($tokens, $i);
+
+                    $this->interfaces[$interface] = array(
+                      'methods'   => array(),
+                      'parent'    => $this->getParent($tokens, $i),
+                      'keywords'  => $this->getKeywords($tokens, $i),
+                      'docblock'  => $this->getDocblock($tokens, $i),
+                      'startLine' => $this->tline($i),
+                      'endLine'   => $interfaceEndLine,
+                      'package'   => $this->getPackage($tokens, $i),
+                      'file'      => $this->filename
+                    );
                     break;
 
                 case 'PHP_Token_CLASS':
@@ -493,19 +518,20 @@ class PHP_CodeCoverage_Util_Tokenizer {
                         'file'      => $this->filename
                     );
 
-                    if ($this->tconst($token) === T_CLASS) {
-                        $class                 = $this->tname($tokens, $i + 2);
+                    $tclass = $this->tclass($token);
+                    if ($tclass === 'PHP_Token_CLASS') {
+                        $class                 = $this->tname($tokens, $i);
                         $classEndLine          = $endLine;
                         $this->classes[$class] = $tmp;
                     } else {
-                        $trait                = $this->tname($tokens, $i + 2);
+                        $trait                = $this->tname($tokens, $i);
                         $traitEndLine         = $endLine;
                         $this->traits[$trait] = $tmp;
                     }
                     break;
 
                 case 'PHP_Token_FUNCTION':
-                    $tname = $this->tname($tokens, $idx);
+                    $tname = $this->tname($tokens, $i);
                     $tmp  = array(
                         'docblock'  => $this->getDocblock($tokens, $i),
                         'keywords'  => $this->getKeywords($tokens, $i),
@@ -547,14 +573,10 @@ class PHP_CodeCoverage_Util_Tokenizer {
                     $this->linesOfCode['cloc'] += $lines + 1;
                     break;
             }
-
-            $lines          = substr_count($text, "\n");
-            $line          += $lines;
         }
 
         $this->linesOfCode['loc']   = substr_count($sourceCode, "\n");
-        $this->linesOfCode['ncloc'] = $this->linesOfCode['loc'] -
-        $this->linesOfCode['cloc'];
+        $this->linesOfCode['ncloc'] = $this->linesOfCode['loc'] - $this->linesOfCode['cloc'];
     }
 
     public function getLinesOfCode() {

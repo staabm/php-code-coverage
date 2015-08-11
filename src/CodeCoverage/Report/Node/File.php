@@ -354,9 +354,9 @@ class PHP_CodeCoverage_Report_Node_File extends PHP_CodeCoverage_Report_Node
         $tokenizer = new PHP_CodeCoverage_Util_Tokenizer($this->getPath());
         $tokenizer->tokenize();
 
-        $classes = $tokenizer->getClasses();
-        $traits = $tokenizer->getTraits();
-        $functions = $tokenizer->getFunctions();
+        $this->processClasses($tokenizer->getClasses());
+        $this->processTraits($tokenizer->getTraits());
+        $this->processFunctions($tokenizer->getFunctions());
         $this->linesOfCode = $tokenizer->getLinesOfCode();
 
         for ($lineNumber = 1; $lineNumber <= $this->linesOfCode['loc']; $lineNumber++) {
