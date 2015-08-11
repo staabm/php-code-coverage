@@ -76,7 +76,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
 
         if ($tconst === T_REQUIRE || $tconst === T_REQUIRE_ONCE || $tconst === T_INCLUDE || $tconst === T_INCLUDE_ONCE) {
             if ($this->tconst(tokens[$idx+2]) === T_CONSTANT_ENCAPSED_STRING) {
-                return trim($tokens[$idx+2], "'\"");
+                return trim($this->tstring($tokens[$idx+2]), "'\"");
             }
             return null;
         }
@@ -88,10 +88,10 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 $tclass = $this->tclass($token);
 
                 if ($tconst === T_STRING) {
-                    $name = (string)$token;
+                    $name = $this->tstring($token);
                     break;
                 } elseif ($tconst === T_STRING && $tclass === 'PHP_Token_AMPERSAND' && $this->tconst($tokens[$i+1]) === T_STRING) {
-                    $name = (string)$tokens[$i+1];
+                    $name = $this->tstring($tokens[$i+1]);
                     break;
                 } elseif ($tclass === 'PHP_Token_OPEN_BRACKET') {
                     $name = 'anonymous function';
@@ -117,15 +117,15 @@ class PHP_CodeCoverage_Util_Tokenizer {
         }
 
         if ($tconst === T_CLASS || $tconst === T_TRAIT) {
-            return (string) $tokens[$idx + 2];
+            return $this->tstring($tokens[$idx + 2]);
         }
 
         if ($tconst === T_NAMESPACE) {
-            $namespace = (string)$tokens[$idx+2];
+            $namespace = $this->tstring($tokens[$idx+2]);
 
             for ($i = $idx + 3;; $i += 2) {
                 if (isset($tokens[$i]) && $this->tconst($tokens[$i]) === T_NS_SEPARATOR) {
-                    $namespace .= '\\' . $tokens[$i+1];
+                    $namespace .= '\\' . $this->tstring($tokens[$i+1]);
                 } else {
                     break;
                 }
@@ -133,6 +133,13 @@ class PHP_CodeCoverage_Util_Tokenizer {
 
             return $namespace;
         }
+    }
+
+    private function tstring($token) {
+        if (is_array($token)) {
+            return $token[1];
+        }
+        return $token;
     }
 
     /**
@@ -166,10 +173,10 @@ class PHP_CodeCoverage_Util_Tokenizer {
         $parent = false;
         if ($this->tconst($tokens[$i+4]) === T_EXTENDS) {
             $ci         = $i + 6;
-            $className = (string)$tokens[$ci];
+            $className = $this->tstring($tokens[$ci]);
 
             while (isset($tokens[$ci+1]) && !($this->tconst($tokens[$ci+1]) === T_WHITESPACE)) {
-                $className .= (string)$tokens[++$ci];
+                $className .= $this->tstring($tokens[++$ci]);
             }
 
             $parent = $className;
@@ -191,7 +198,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 $ii++;
 
                 if ($this->tconst($tokens[$ii]) === T_STRING) {
-                    $interfaces[] = (string)$tokens[$ii];
+                    $interfaces[] = $this->tstring($tokens[$ii]);
                 }
             }
         }
@@ -261,7 +268,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
                 break;
             }
 
-            return (string)$token;
+            return $this->tstring($token);
         }
     }
 
@@ -389,7 +396,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
         while (isset($tokens[$i]) && $tclass = $this->tclass($tokens[$i]) &&
                $tclass !== 'PHP_Token_OPEN_CURLY' &&
                $tclass !== 'PHP_Token_SEMICOLON') {
-            $signature .= $tokens[$i++];
+            $signature .= $this->tstring($tokens[$i++]);
         }
 
         $signature = trim($signature);
