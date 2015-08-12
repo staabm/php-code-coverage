@@ -445,13 +445,7 @@ class PHP_CodeCoverage_Util_Tokenizer {
         $line      = 1;
         for ($i = 0; $i < $numTokens; ++$i) {
             $token = $tokens[$i];
-
-            if (is_array($token)) {
-                $name = substr(token_name($token[0]), 2);
-                $text = $token[1];
-            } else {
-                $text       = $token;
-            }
+            $text = $this->tstring($token);
 
             $this->tlines[$i] = $line;
 
@@ -468,16 +462,8 @@ class PHP_CodeCoverage_Util_Tokenizer {
         $line      = 1;
         for ($i = 0; $i < $numTokens; ++$i) {
             $token = $tokens[$i];
-
-            if (is_array($token)) {
-                $name = substr(token_name($token[0]), 2);
-                $text = $token[1];
-
-                $tokenClass = 'PHP_Token_' . $name;
-            } else {
-                $text       = $token;
-                $tokenClass = self::$customTokens[$token];
-            }
+            $text = $this->tstring($token);
+            $tokenClass = $this->tclass($token);
 
             $lines          = substr_count($text, "\n");
             $line          += $lines;
