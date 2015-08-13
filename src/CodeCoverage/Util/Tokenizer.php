@@ -7,137 +7,8 @@ class PHP_CodeCoverage_Util_Tokenizer {
     private $traits = [];
     private $linesOfCode = array('loc' => 0, 'cloc' => 0, 'ncloc' => 0);
 
-    /**
-     * @var array
-     */
-    protected static $customTokens = array(
-        '(' => 'PHP_Token_OPEN_BRACKET',
-        ')' => 'PHP_Token_CLOSE_BRACKET',
-        '[' => 'PHP_Token_OPEN_SQUARE',
-        ']' => 'PHP_Token_CLOSE_SQUARE',
-        '{' => 'PHP_Token_OPEN_CURLY',
-        '}' => 'PHP_Token_CLOSE_CURLY',
-        ';' => 'PHP_Token_SEMICOLON',
-        '.' => 'PHP_Token_DOT',
-        ',' => 'PHP_Token_COMMA',
-        '=' => 'PHP_Token_EQUAL',
-        '<' => 'PHP_Token_LT',
-        '>' => 'PHP_Token_GT',
-        '+' => 'PHP_Token_PLUS',
-        '-' => 'PHP_Token_MINUS',
-        '*' => 'PHP_Token_MULT',
-        '/' => 'PHP_Token_DIV',
-        '?' => 'PHP_Token_QUESTION_MARK',
-        '!' => 'PHP_Token_EXCLAMATION_MARK',
-        ':' => 'PHP_Token_COLON',
-        '"' => 'PHP_Token_DOUBLE_QUOTES',
-        '@' => 'PHP_Token_AT',
-        '&' => 'PHP_Token_AMPERSAND',
-        '%' => 'PHP_Token_PERCENT',
-        '|' => 'PHP_Token_PIPE',
-        '$' => 'PHP_Token_DOLLAR',
-        '^' => 'PHP_Token_CARET',
-        '~' => 'PHP_Token_TILDE',
-        '`' => 'PHP_Token_BACKTICK'
-    );
-
     public function __construct($filename) {
         $this->filename = $filename;
-    }
-
-
-    private function tconst($token) {
-        if (is_array($token)) {
-            return $token[0];
-        }
-        return null;
-    }
-
-    private function tclass($token) {
-        if (is_array($token)) {
-            $name = substr(token_name($token[0]), 2);
-            $text = $token[1];
-
-            return 'PHP_Token_' . $name;
-        } else {
-            $text       = $token;
-            return self::$customTokens[$token];
-        }
-    }
-
-    private function tline($idx) {
-        return $this->tlines[$idx];
-    }
-
-    private function tname(array $tokens, $idx) {
-        $tconst = $this->tconst($tokens[$idx]);
-
-        if ($tconst === T_REQUIRE || $tconst === T_REQUIRE_ONCE || $tconst === T_INCLUDE || $tconst === T_INCLUDE_ONCE) {
-            if ($this->tconst(tokens[$idx+2]) === T_CONSTANT_ENCAPSED_STRING) {
-                return trim($this->tstring($tokens[$idx+2]), "'\"");
-            }
-            return null;
-        }
-
-        if ($tconst === T_FUNCTION) {
-            for ($i = $idx + 1; $i < count($tokens); $i++) {
-                $token = $tokens[$i];
-                $tconst = $this->tconst($token);
-                $tclass = $this->tclass($token);
-
-                if ($tconst === T_STRING) {
-                    $name = $this->tstring($token);
-                    break;
-                } elseif ($tclass === 'PHP_Token_AMPERSAND' && $this->tconst($tokens[$i+1]) === T_STRING) {
-                    $name = $this->tstring($tokens[$i+1]);
-                    break;
-                } elseif ($tclass === 'PHP_Token_OPEN_BRACKET') {
-                    $name = 'anonymous function';
-                    break;
-                }
-            }
-
-            if ($name != 'anonymous function') {
-                for ($i = $idx; $i; --$i) {
-                    $tconst = $this->tconst($tokens[$i]);
-                    if ($tconst === T_NAMESPACE) {
-                        $name = $this->tname($tokens, $i) . '\\' . $name;
-                        break;
-                    }
-
-                    if ($tconst === T_INTERFACE || $tconst === T_CLASS || $tconst === T_TRAIT) {
-                        break;
-                    }
-                }
-            }
-
-            return $name;
-        }
-
-        if ($tconst === T_INTERFACE || $tconst === T_CLASS || $tconst === T_TRAIT) {
-            return $this->tstring($tokens[$idx + 2]);
-        }
-
-        if ($tconst === T_NAMESPACE) {
-            $namespace = $this->tstring($tokens[$idx+2]);
-
-            for ($i = $idx + 3;; $i += 2) {
-                if (isset($tokens[$i]) && $this->tconst($tokens[$i]) === T_NS_SEPARATOR) {
-                    $namespace .= '\\' . $this->tstring($tokens[$i+1]);
-                } else {
-                    break;
-                }
-            }
-
-            return $namespace;
-        }
-    }
-
-    private function tstring($token) {
-        if (is_array($token)) {
-            return $token[1];
-        }
-        return $token;
     }
 
     /**
@@ -441,20 +312,21 @@ class PHP_CodeCoverage_Util_Tokenizer {
         $tokens = token_get_all($sourceCode);
         $numTokens = count($tokens);
 
-        // precalculate in which line the tokens reside, for later lookaheads
         $line      = 1;
         $ccTokens = array();
         for ($i = 0; $i < $numTokens; ++$i) {
-            $preToken = $tokens[$i];
-            $text = $this->tstring($preToken);
+            $nativeToken = $tokens[$i];
+            unset($tokens[$i]);
 
-            $ccTokens[] = new CodeCoverage_Token(
-                $this->tname($tokens, $i),
-                $this->tconst($preToken),
-                $this->tclass($preToken),
-                $text,
+            $ccToken = new CodeCoverage_Token(
+                $nativeToken,
+                $i,
                 $line
             );
+            $ccToken->allTokens =& $ccTokens;
+            $ccTokens[$i] = $ccToken;
+
+            $text = $ccToken->tstring;
 
             $lines          = substr_count($text, "\n");
             $line          += $lines;
@@ -590,18 +462,150 @@ class PHP_CodeCoverage_Util_Tokenizer {
     }
 }
 
+/**
+ * @property tname
+ */
 class CodeCoverage_Token {
-    public $tname;
-    public $tconst;
+    /**
+     * @var CodeCoverage_Token[] $allTokens
+     */
+    public $allTokens;
+    /**
+     * PHP native token provided by token_get_all().
+     * @var string|array
+     */
+    private $nativeToken;
+    private $idx;
+
     public $tclass;
+    public $tconst;
     public $tstring;
     public $tline;
 
-    public function __construct($tname, $tconst, $tclass, $tstring, $tline) {
-        $this->tname = $tname;
-        $this->tconst = $tconst;
-        $this->tclass = $tclass;
-        $this->tstring = $tstring;
+    /**
+     * @var array
+     */
+    protected static $customTokens = array(
+        '(' => 'PHP_Token_OPEN_BRACKET',
+        ')' => 'PHP_Token_CLOSE_BRACKET',
+        '[' => 'PHP_Token_OPEN_SQUARE',
+        ']' => 'PHP_Token_CLOSE_SQUARE',
+        '{' => 'PHP_Token_OPEN_CURLY',
+        '}' => 'PHP_Token_CLOSE_CURLY',
+        ';' => 'PHP_Token_SEMICOLON',
+        '.' => 'PHP_Token_DOT',
+        ',' => 'PHP_Token_COMMA',
+        '=' => 'PHP_Token_EQUAL',
+        '<' => 'PHP_Token_LT',
+        '>' => 'PHP_Token_GT',
+        '+' => 'PHP_Token_PLUS',
+        '-' => 'PHP_Token_MINUS',
+        '*' => 'PHP_Token_MULT',
+        '/' => 'PHP_Token_DIV',
+        '?' => 'PHP_Token_QUESTION_MARK',
+        '!' => 'PHP_Token_EXCLAMATION_MARK',
+        ':' => 'PHP_Token_COLON',
+        '"' => 'PHP_Token_DOUBLE_QUOTES',
+        '@' => 'PHP_Token_AT',
+        '&' => 'PHP_Token_AMPERSAND',
+        '%' => 'PHP_Token_PERCENT',
+        '|' => 'PHP_Token_PIPE',
+        '$' => 'PHP_Token_DOLLAR',
+        '^' => 'PHP_Token_CARET',
+        '~' => 'PHP_Token_TILDE',
+        '`' => 'PHP_Token_BACKTICK'
+    );
+
+    public function __construct($nativeToken, $idx, $tline) {
+        $this->nativeToken = $nativeToken;
+        $this->idx = $idx;
         $this->tline = $tline;
+        $this->tclass  = is_array($nativeToken) ? 'PHP_Token_' . substr(token_name($nativeToken[0]), 2) : self::$customTokens[$nativeToken];
+        $this->tconst  = is_array($nativeToken) ? $nativeToken[0] : $nativeToken;
+        $this->tstring = is_array($nativeToken) ? $nativeToken[1] : $nativeToken;
+    }
+
+    public function __destruct() {
+        $this->nativeToken = null;
+    }
+
+    public function __get($key) {
+        // lazy init properties which are not that likely to be required
+        // and cost us too much to preload
+        switch($key) {
+            case "tname":
+                $val = $this->$key($this->allTokens, $this->idx);
+                // free this maybe big array as soon as possible
+                $this->nativeToken = null;
+                break;
+            default: throw new Exception("undefined property ". $key);
+        }
+
+        $this->$key = $val;
+        return $val;
+    }
+
+    private function tname(array $tokens, $idx) {
+        $tconst = $this->tconst;
+
+        if ($tconst === T_REQUIRE || $tconst === T_REQUIRE_ONCE || $tconst === T_INCLUDE || $tconst === T_INCLUDE_ONCE) {
+            if ($tokens[$idx+2]->tconst === T_CONSTANT_ENCAPSED_STRING) {
+                return trim($tokens[$idx+2]->tstring, "'\"");
+            }
+            return null;
+        }
+
+        if ($tconst === T_FUNCTION) {
+            for ($i = $idx + 1; $i < count($tokens); $i++) {
+                $token = $tokens[$i];
+                $tconst = $token->tconst;
+                $tclass = $token->tclass;
+
+                if ($tconst === T_STRING) {
+                    $name = $token->tstring;
+                    break;
+                } elseif ($tclass === 'PHP_Token_AMPERSAND' && $tokens[$i+1]->tconst === T_STRING) {
+                    $name = $tokens[$i+1]->tstring;
+                    break;
+                } elseif ($tclass === 'PHP_Token_OPEN_BRACKET') {
+                    $name = 'anonymous function';
+                    break;
+                }
+            }
+
+            if ($name != 'anonymous function') {
+                for ($i = $idx; $i; --$i) {
+                    $tconst = $tokens[$i]->tconst;
+                    if ($tconst === T_NAMESPACE) {
+                        $name = $tokens[$i]->tname . '\\' . $name;
+                        break;
+                    }
+
+                    if ($tconst === T_INTERFACE || $tconst === T_CLASS || $tconst === T_TRAIT) {
+                        break;
+                    }
+                }
+            }
+
+            return $name;
+        }
+
+        if ($tconst === T_INTERFACE || $tconst === T_CLASS || $tconst === T_TRAIT) {
+            return $tokens[$idx + 2]->tstring;
+        }
+
+        if ($tconst === T_NAMESPACE) {
+            $namespace = $tokens[$idx+2]->tstring;
+
+            for ($i = $idx + 3;; $i += 2) {
+                if (isset($tokens[$i]) && $tokens[$i]->tconst === T_NS_SEPARATOR) {
+                    $namespace .= '\\' . $tokens[$i+1]->tstring;
+                } else {
+                    break;
+                }
+            }
+
+            return $namespace;
+        }
     }
 }
