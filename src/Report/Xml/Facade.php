@@ -9,7 +9,6 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
-use XMLWriter;
 use const DIRECTORY_SEPARATOR;
 use function count;
 use function dirname;
@@ -35,6 +34,7 @@ use SebastianBergmann\CodeCoverage\Version;
 use SebastianBergmann\CodeCoverage\WriteOperationFailedException;
 use SebastianBergmann\CodeCoverage\XmlException;
 use SebastianBergmann\Environment\Runtime;
+use XMLWriter;
 
 /**
  * @phpstan-import-type ProcessedClassType from File
@@ -160,9 +160,10 @@ final class Facade
             $this->processFunction($function, $fileReport);
         }
 
-        $writer = new XMLWriter();
+        $writer = new XMLWriter;
         $writer->openMemory();
         $coverageNode = $fileReport->lineCoverageNode();
+
         foreach ($file->lineCoverageData() as $line => $tests) {
             if (!is_array($tests) || count($tests) === 0) {
                 continue;

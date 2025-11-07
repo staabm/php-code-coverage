@@ -69,6 +69,7 @@ class File
         );
 
         assert($lineNode instanceof DOMElement);
+
         return $lineNode;
     }
 
