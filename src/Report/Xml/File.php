@@ -45,7 +45,7 @@ class File
         return new Totals($totalsContainer);
     }
 
-    public function lineCoverage(string $line): Coverage
+    public function lineCoverageNode(): DOMElement
     {
         $coverage = $this->contextNode->getElementsByTagNameNS(
             'https://schema.phpunit.de/coverage/1.0',
@@ -69,8 +69,7 @@ class File
         );
 
         assert($lineNode instanceof DOMElement);
-
-        return new Coverage($lineNode, $line);
+        return $lineNode;
     }
 
     protected function contextNode(): DOMElement

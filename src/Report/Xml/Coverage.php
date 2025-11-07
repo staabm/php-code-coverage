@@ -26,10 +26,8 @@ final class Coverage
         $this->line        = $line;
     }
 
-    public function finalize(array $tests): void
+    public function appendToWriter(XMLWriter $writer, array $tests): void
     {
-        $writer = new XMLWriter;
-        $writer->openMemory();
         $writer->startElementNs(null, $this->contextNode->nodeName, 'https://schema.phpunit.de/coverage/1.0');
         $writer->writeAttribute('nr', $this->line);
 
@@ -39,13 +37,5 @@ final class Coverage
             $writer->endElement();
         }
         $writer->endElement();
-
-        $fragment = $this->contextNode->ownerDocument->createDocumentFragment();
-        $fragment->appendXML($writer->outputMemory());
-
-        $this->contextNode->parentNode->replaceChild(
-            $fragment,
-            $this->contextNode,
-        );
     }
 }

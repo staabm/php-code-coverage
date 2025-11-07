@@ -9,6 +9,7 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
+use XMLWriter;
 use const DIRECTORY_SEPARATOR;
 use function count;
 use function dirname;
@@ -159,14 +160,25 @@ final class Facade
             $this->processFunction($function, $fileReport);
         }
 
+        $writer = new XMLWriter();
+        $writer->openMemory();
+        $coverageNode = $fileReport->lineCoverageNode();
         foreach ($file->lineCoverageData() as $line => $tests) {
             if (!is_array($tests) || count($tests) === 0) {
                 continue;
             }
 
-            $coverage = $fileReport->lineCoverage((string) $line);
-            $coverage->finalize($tests);
+            $coverage = new Coverage($coverageNode, (string) $line);
+            $coverage->appendToWriter($writer, $tests);
         }
+
+        $fragment = $coverageNode->ownerDocument->createDocumentFragment();
+        $fragment->appendXML($writer->outputMemory());
+
+        $coverageNode->parentNode->replaceChild(
+            $fragment,
+            $coverageNode,
+        );
 
         $fileReport->source()->setSourceCode(
             file_get_contents($file->pathAsString()),
