@@ -9,6 +9,7 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
+use XMLWriter;
 use function assert;
 use DOMDocument;
 use DOMElement;
@@ -42,23 +43,7 @@ final class Project extends Node
 
     public function buildInformation(): BuildInformation
     {
-        $buildNode = $this->dom()->getElementsByTagNameNS(
-            Facade::XML_NAMESPACE,
-            'build',
-        )->item(0);
-
-        if ($buildNode === null) {
-            $buildNode = $this->dom()->documentElement->appendChild(
-                $this->dom()->createElementNS(
-                    Facade::XML_NAMESPACE,
-                    'build',
-                ),
-            );
-        }
-
-        assert($buildNode instanceof DOMElement);
-
-        return new BuildInformation($buildNode);
+        return new BuildInformation();
     }
 
     public function tests(): Tests

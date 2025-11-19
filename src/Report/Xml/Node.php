@@ -9,6 +9,7 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
+use XMLWriter;
 use function assert;
 use DOMDocument;
 use DOMElement;

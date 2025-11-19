@@ -9,10 +9,9 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
-use function assert;
+use XMLWriter;
 use function phpversion;
 use DateTimeImmutable;
-use DOMElement;
 use SebastianBergmann\Environment\Runtime;
 
 /**
@@ -20,63 +19,52 @@ use SebastianBergmann\Environment\Runtime;
  */
 final readonly class BuildInformation
 {
-    private DOMElement $contextNode;
-
-    public function __construct(DOMElement $contextNode)
-    {
-        $this->contextNode = $contextNode;
-    }
+    private Runtime $runtime;
+    private DateTimeImmutable $buildTime;
+    private string $phpunitVersion;
+    private string $coverageVersion;
 
     public function setRuntimeInformation(Runtime $runtime): void
     {
-        $runtimeNode = $this->nodeByName('runtime');
-
-        $runtimeNode->setAttribute('name', $runtime->getName());
-        $runtimeNode->setAttribute('version', $runtime->getVersion());
-        $runtimeNode->setAttribute('url', $runtime->getVendorUrl());
-
-        $driverNode = $this->nodeByName('driver');
-
-        if ($runtime->hasXdebug()) {
-            $driverNode->setAttribute('name', 'xdebug');
-            $driverNode->setAttribute('version', phpversion('xdebug'));
-        }
-
-        if ($runtime->hasPCOV()) {
-            $driverNode->setAttribute('name', 'pcov');
-            $driverNode->setAttribute('version', phpversion('pcov'));
-        }
+        $this->runtime = $runtime;
     }
 
     public function setBuildTime(DateTimeImmutable $date): void
     {
-        $this->contextNode->setAttribute('time', $date->format('D M j G:i:s T Y'));
+        $this->buildTime = $date;
     }
 
     public function setGeneratorVersions(string $phpUnitVersion, string $coverageVersion): void
     {
-        $this->contextNode->setAttribute('phpunit', $phpUnitVersion);
-        $this->contextNode->setAttribute('coverage', $coverageVersion);
+        $this->phpunitVersion = $phpUnitVersion;
+        $this->coverageVersion = $coverageVersion;
     }
 
-    private function nodeByName(string $name): DOMElement
+    public function write(XMLWriter $writer): void
     {
-        $node = $this->contextNode->getElementsByTagNameNS(
-            Facade::XML_NAMESPACE,
-            $name,
-        )->item(0);
+        $writer->startElement('build');
+        $writer->writeAttribute('time', $this->buildTime->format('D M j G:i:s T Y'));
+        $writer->writeAttribute('phpunit', $this->phpunitVersion);
+        $writer->writeAttribute('coverage', $this->coverageVersion);
 
-        if ($node === null) {
-            $node = $this->contextNode->appendChild(
-                $this->contextNode->ownerDocument->createElementNS(
-                    Facade::XML_NAMESPACE,
-                    $name,
-                ),
-            );
+        $writer->startElement('runtime');
+        $writer->writeAttribute('name', $this->runtime->getName());
+        $writer->writeAttribute('version', $this->runtime->getVersion());
+        $writer->writeAttribute('url', $this->runtime->getVendorUrl());
+        $writer->endElement();
+
+        $writer->startElement('driver');
+        if ($this->runtime->hasXdebug()) {
+            $writer->writeAttribute('name', 'xdebug');
+            $writer->writeAttribute('version', phpversion('xdebug'));
         }
+        if ($this->runtime->hasPCOV()) {
+            $writer->writeAttribute('name', 'pcov');
+            $writer->writeAttribute('version', phpversion('pcov'));
+        }
+        $writer->endElement();
 
-        assert($node instanceof DOMElement);
-
-        return $node;
+        $writer->endElement();
     }
+
 }

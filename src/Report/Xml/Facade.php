@@ -9,6 +9,7 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
+use XMLWriter;
 use const DIRECTORY_SEPARATOR;
 use function count;
 use function dirname;
@@ -47,10 +48,13 @@ final class Facade
     private string $target;
     private Project $project;
     private readonly string $phpUnitVersion;
+    private XMLWriter $xmlWriter;
 
     public function __construct(string $version)
     {
         $this->phpUnitVersion = $version;
+        $this->xmlWriter = new XMLWriter();
+        $this->xmlWriter->openMemory();
     }
 
     /**
@@ -84,6 +88,7 @@ final class Facade
         $buildNode->setRuntimeInformation(new Runtime);
         $buildNode->setBuildTime(new DateTimeImmutable);
         $buildNode->setGeneratorVersions($this->phpUnitVersion, Version::id());
+        $buildNode->write($this->xmlWriter);
     }
 
     /**
